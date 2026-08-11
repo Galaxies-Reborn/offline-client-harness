@@ -353,6 +353,10 @@ namespace GameNamespace
 	Game::GameOptionChangedCallback ms_gameOptionChangedCallback = NULL;
 	Game::ExternalCommandHandler ms_externalCommandHandler = NULL;
 
+	//-- Offline harness fallback avatar, used when [ClientGame] groundScene is set but
+	//   avatarSelection is not. Matches the default the /scene load command already uses.
+	char const * const             cs_defaultOfflineAvatar = "object/creature/player/shared_human_male.iff";
+
 	ConstCharCrcLowerString const  cs_combatAnimationStateName("combat");
 	AnimationStateNameId           s_combatAnimationStateId;
 
@@ -959,18 +963,68 @@ void Game::install(Application const application)
 				else
 #endif
 				{
-					CuiMediator * const splashMediator = CuiMediatorFactory::activate (CuiMediatorTypes::Splash);
-					CuiMediator * const backdropMediator = CuiMediatorFactory::activate (CuiMediatorTypes::Backdrop);
+					//-- Offline harness: boot straight into a single player ground scene.
+					//
+					//   Setting [ClientGame] groundScene to a terrain file is the whole opt-in. This
+					//   branch never reaches the splash or the login screen, so it never contacts a
+					//   login, central or game server, and nothing here needs a database. That makes
+					//   the client runnable on its own for client-side work.
+					//
+					//   The single player GroundScene constructor already exists and is already
+					//   correct -- it builds the player from an object template locally and starts
+					//   with m_receivedSceneReady set, because in single player there is no server
+					//   to wait on. What was missing was a way to reach it: the shipped route is the
+					//   login screen's dev button, which SwgCuiLoginScreen hides when PRODUCTION == 1,
+					//   and PRODUCTION is the only configuration that links a client.
+					//
+					//   WARNING and not DEBUG_REPORT_LOG for the same reason -- DEBUG_* compiles out
+					//   of PRODUCTION, so a DEBUG_ log here would be invisible in every real build.
+					char const * const offlineGroundScene = ConfigClientGame::getGroundScene ();
 
-					if (!splashMediator)
+					if (offlineGroundScene && *offlineGroundScene)
 					{
-						WARNING(true, ("Game::install: /Splash page missing, going directly to LoginScreen"));
-						IGNORE_RETURN(CuiMediatorFactory::activate ("LoginScreen"));
+						FATAL (!TreeFile::exists (offlineGroundScene) || _strnicmp (offlineGroundScene, "scene", 5) == 0, ("[ClientGame] groundScene=\"%s\" is not a loadable terrain file. Give a path to a .trn, eg terrain/tatooine.trn", offlineGroundScene));
+
+						char const * offlineAvatar = ConfigClientGame::getAvatarSelection ();
+						if (!offlineAvatar || !*offlineAvatar)
+							offlineAvatar = cs_defaultOfflineAvatar;
+
+						FATAL (!TreeFile::exists (offlineAvatar), ("[ClientGame] avatarSelection=\"%s\" does not exist in the tree file stack", offlineAvatar));
+
+						WARNING (true, ("Offline harness: single player boot, terrain=\"%s\" avatar=\"%s\". No server connection will be attempted.", offlineGroundScene, offlineAvatar));
+
+						preloadAssets ();
+
+						ms_singlePlayer = true;
+
+						//-- immediately, so the boot does not depend on a config key being right.
+						//   The non-immediate form looks up a planet cut-scene for the terrain and
+						//   defers scene creation behind it if one is found; disableCutScenes would
+						//   suppress that, but a harness should not need a second setting to be
+						//   correct before it starts. Both live callers of this -- /SceneSel and
+						//   /scene load -- pass true for the same reason.
+						setScene(
+							true,
+							offlineGroundScene,
+							offlineAvatar,
+							0
+						);
 					}
+					else
+					{
+						CuiMediator * const splashMediator = CuiMediatorFactory::activate (CuiMediatorTypes::Splash);
+						CuiMediator * const backdropMediator = CuiMediatorFactory::activate (CuiMediatorTypes::Backdrop);
 
-					UNREF(backdropMediator);
+						if (!splashMediator)
+						{
+							WARNING(true, ("Game::install: /Splash page missing, going directly to LoginScreen"));
+							IGNORE_RETURN(CuiMediatorFactory::activate ("LoginScreen"));
+						}
 
-					preloadAssets ();
+						UNREF(backdropMediator);
+
+						preloadAssets ();
+					}
 				}
 			}
 		}

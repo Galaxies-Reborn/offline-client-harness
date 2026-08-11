@@ -142,7 +142,15 @@ void SwgCuiLoginScreen::performActivate ()
 	setInputToggleActive   (false);
 
 #if PRODUCTION == 1
-	m_devButton->SetVisible (false);
+	//-- The dev button transitions to /SceneSel, which loads a single player ground scene with no
+	//   server. PRODUCTION is the only configuration that links a client, so hiding it here is what
+	//   made the offline route unreachable in every real build.
+	//
+	//   Default is still hidden, so a shipping client is unchanged. The offline harness turns it on
+	//   with [ClientGame] offlineSceneSelectButton=1 to get interactive scene picking on top of the
+	//   groundScene auto-boot. This depends on the /SceneSel page being present in the tree file
+	//   stack; if your .tre set does not carry it, use groundScene or /scene load instead.
+	m_devButton->SetVisible (ConfigFile::getKeyBool ("ClientGame", "offlineSceneSelectButton", false));
 #endif
 
 	connectToMessage (LoginConnection::Messages::LoginConnectionOpened);

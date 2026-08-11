@@ -112,6 +112,7 @@
 #include "sharedFile/AsynchronousLoader.h"
 #include "sharedFile/FileManifest.h"
 #include "sharedFile/TreeFile.h"
+#include "sharedFoundation/ConfigFile.h"
 #include "sharedFoundation/ConstCharCrcString.h"
 #include "sharedFoundation/CrashReportInformation.h"
 #include "sharedFoundation/CrcLowerString.h"
@@ -960,6 +961,34 @@ GroundScene::GroundScene(
 	player->setAppearanceHeldItemState ();
 
 	init (terrainFilename, player, ConfigClientTerrain::getEnvironmentStartTime ());
+
+	//-- Drop the player onto the terrain.
+	//
+	//   [ClientGame] singlePlayerStartLocation is an X/Y/Z triple whose Y defaults to 0, and 0 is
+	//   below ground on every shipped heightmap, so an offline start spawned the avatar inside the
+	//   terrain unless the operator already knew the exact height to type. Height is only knowable
+	//   after init(), which is what loads the terrain, so the snap has to happen here rather than
+	//   where the position is first set above.
+	//
+	//   Set singlePlayerSnapToTerrain=0 to keep the configured Y verbatim -- that is what you want
+	//   for a start location inside a building, or in space, where the heightmap is not the floor.
+	if (ConfigFile::getKeyBool ("ClientGame", "singlePlayerSnapToTerrain", true))
+	{
+		TerrainObject const * const terrainObject = TerrainObject::getConstInstance ();
+		if (terrainObject)
+		{
+			Vector position = player->getPosition_w ();
+			float  height   = 0.0f;
+
+			if (terrainObject->getHeight (position, height))
+			{
+				position.y = height;
+				player->setPosition_w (position);
+			}
+			else
+				WARNING (true, ("Offline harness: no terrain height at x=%1.2f z=%1.2f, leaving the player at y=%1.2f.", position.x, position.z, position.y));
+		}
+	}
 
 	player->endBaselines ();
 

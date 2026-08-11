@@ -1,3 +1,29 @@
+# Offline client harness
+
+Run the x64 DX11 SWG client on its own — **no login server, no central server, no game server, no
+Oracle.** The client builds its own player, loads a planet's terrain and the static world, and
+runs, so client-side work (rendering, UI, input, animation, terrain, asset loading) can be built
+and tested without standing up the server stack for every iteration.
+
+```powershell
+.\scripts\Build-X64Client.ps1 -Configuration Release
+.\harness\New-OfflineRuntime.ps1 -AssetSource E:\SWG\_client -Destination E:\SWG\_offline
+.\harness\Start-OfflineClient.ps1 -RuntimeRoot E:\SWG\_offline
+```
+
+**→ [harness/README.md](harness/README.md)** — knobs, scenes, how it works, what does not work
+offline, and diagnostics.
+
+Game assets are not distributed here. You supply your own client installation as `-AssetSource`;
+the harness hardlinks its `.tre` stack into a separate runtime directory and never writes to it.
+
+This repository is a fork of
+[Galaxies-Reborn/client-tools](https://github.com/Galaxies-Reborn/client-tools) at branch
+`x64-dx11-vanilla`, with full history. Everything below is that repository's documentation and
+still applies — the harness is additive.
+
+---
+
 # Client/Tools Repo
 This repository contains the source for the SWG Client as well as the tools that support certain aspects of development.
 
