@@ -64,6 +64,19 @@ last value entered for a key, so `offline.cfg` overrides `user.cfg` and `options
 | `disableWorldSnapshot` | Set `1` for bare terrain with no buildings or props. |
 | `offlineSceneSelectButton` | Set `1` to expose the login screen's dev button in a PRODUCTION build, which opens the `/SceneSel` page. Only useful with `groundScene` cleared. |
 
+## Verified
+
+Built from a clean `x64-dx11-vanilla` checkout and run end to end on 2026-08-10: `SwgClient`
+`Release|x64` builds with 0 errors, `New-OfflineRuntime.ps1` mirrors a 209-TRE installation in
+9,681 hardlinks, and the client boots into Tatooine and draws the world — terrain, static objects
+and HUD — with no server process running anywhere. The log line to look for is:
+
+```
+WARNING 5762f016: Offline harness: single player boot, terrain="terrain/tatooine.trn"
+  avatar="object/creature/player/shared_human_male.iff". No server connection will be attempted.
+WARNING 9ed1f4e9: Offline harness: snapping the player to terrain height 4.04 at x=3528.00 z=-4804.00.
+```
+
 ## Scenes
 
 Ground terrain lives at `terrain/<planet>.trn` in the tree file stack:
@@ -98,10 +111,16 @@ This harness changes three things:
   the splash and login screen are ever activated. Both the terrain file and the avatar template
   are checked against the tree file stack up front, so a typo fails immediately and by name
   instead of somewhere deep in scene load.
-- **`GroundScene`'s single-player constructor** snaps the avatar to terrain height after `init()`.
-  The configured start location's Y defaults to 0, which is below ground on every shipped
-  heightmap, so an offline start used to spawn the player inside the terrain unless the operator
-  already knew the exact height to type.
+- **`GroundScene` snaps the avatar to terrain height** once loading finishes. The configured start
+  location's Y defaults to 0, which is below ground on every shipped heightmap, so an offline start
+  used to spawn the player inside the terrain unless the operator already knew the exact height to
+  type. The snap cannot happen at construction: no terrain chunk covers the start position that
+  early, and `getHeightForceChunkCreation` does not help because the client's override of it only
+  looks for an already renderable chunk. It waits for `_onFinishedLoading` instead.
+- **`GroundScene::isFinishedLoading` waives its `PlayerObject` requirement in single player.** That
+  object is created and sent by the game server, so offline it is permanently null and the real
+  completion test could never pass — the loading screen only came down on the 90 second hard
+  timeout. Every other term still has to be true.
 - **`SwgCuiLoginScreen`** gates the dev button on config rather than hiding it unconditionally in
   PRODUCTION. Default is still hidden, so a shipping client is unchanged.
 
@@ -125,7 +144,8 @@ not broken:
   skills, xp, waypoints, collections, the friends list — is created and sent by the server, so
   `Game::getPlayerObject()` returns null offline. Mediators that guard for that degrade quietly;
   ones that do not can fault when opened. This is the single most likely source of a crash in
-  offline mode, and it is a UI panel you opened rather than the scene itself.
+  offline mode, and it is a UI panel you opened rather than the scene itself. (Scene *loading* no
+  longer waits on it — see above — but individual panels still read it.)
 
 Terrain, static world objects, appearance, animation, sound, particles, shaders and the UI are all
 client-side and all work.

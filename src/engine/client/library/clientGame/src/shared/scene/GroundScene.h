@@ -107,6 +107,11 @@ private:
 	bool                    m_usingGodClientInteriorCamera;
 
 	bool                    m_loading;
+
+	//-- Single player only: drop the player onto the heightmap once loading has finished.
+	//   Cleared when the snap has been done or declined.
+	bool                    m_singlePlayerSnapPending;
+
 	bool                    m_sentSceneChannel;
 	bool                    m_receivedSceneReady;
 	bool                    m_noDraw;

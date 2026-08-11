@@ -139,13 +139,15 @@ if (-not $PSCmdlet.ShouldProcess($runtimeRoot, "build offline client runtime fro
 # Excluded: build and run droppings that either do not belong to a fresh runtime or would make
 # the mirror confusing to read. Nothing here is needed to launch.
 
+# compiled_shader is deliberately NOT excluded. Blobs there are keyed by a hash of the exact
+# compiler input, so a carried-over cache cannot be stale -- a changed program hashes differently,
+# finds no file and compiles. Mirroring it is a large first-run saving.
 $excludedDirectories = @(
     "logs",
     "screenshots",
     "profiles",
     ".x64-backups",
-    ".git",
-    "compiled_shader"
+    ".git"
 )
 
 $excludedExtensions = @(".pdb", ".log", ".bak", ".ilk", ".exp")

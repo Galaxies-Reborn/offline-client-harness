@@ -899,6 +899,7 @@ GroundScene::GroundScene(
 	m_usingGodClientCamera(false),
 	m_usingGodClientInteriorCamera(false),
 	m_loading (true),
+	m_singlePlayerSnapPending (false),
 	m_sentSceneChannel(false),
 	m_receivedSceneReady(true), // in single player the server doesn't need to be ready
 	m_noDraw(false),
@@ -962,33 +963,22 @@ GroundScene::GroundScene(
 
 	init (terrainFilename, player, ConfigClientTerrain::getEnvironmentStartTime ());
 
-	//-- Drop the player onto the terrain.
+	//-- Arm the terrain snap. It cannot happen here.
 	//
 	//   [ClientGame] singlePlayerStartLocation is an X/Y/Z triple whose Y defaults to 0, and 0 is
-	//   below ground on every shipped heightmap, so an offline start spawned the avatar inside the
-	//   terrain unless the operator already knew the exact height to type. Height is only knowable
-	//   after init(), which is what loads the terrain, so the snap has to happen here rather than
-	//   where the position is first set above.
+	//   below ground on every shipped heightmap, so an offline start spawns the avatar inside the
+	//   terrain unless the operator already knows the exact height to type.
+	//
+	//   Asking for the height here does not work, and neither does getHeightForceChunkCreation:
+	//   the client's override of it, ClientProceduralTerrainAppearance, only looks for an already
+	//   renderable chunk and does not force anything. This early no chunk covers the start
+	//   position, so both report failure for a position in the middle of Tatooine. Measured, not
+	//   assumed -- it logged "no terrain height at x=3528.00 z=-4804.00". The snap therefore waits
+	//   for _onFinishedLoading, by which point terrain generation has stabilized.
 	//
 	//   Set singlePlayerSnapToTerrain=0 to keep the configured Y verbatim -- that is what you want
 	//   for a start location inside a building, or in space, where the heightmap is not the floor.
-	if (ConfigFile::getKeyBool ("ClientGame", "singlePlayerSnapToTerrain", true))
-	{
-		TerrainObject const * const terrainObject = TerrainObject::getConstInstance ();
-		if (terrainObject)
-		{
-			Vector position = player->getPosition_w ();
-			float  height   = 0.0f;
-
-			if (terrainObject->getHeight (position, height))
-			{
-				position.y = height;
-				player->setPosition_w (position);
-			}
-			else
-				WARNING (true, ("Offline harness: no terrain height at x=%1.2f z=%1.2f, leaving the player at y=%1.2f.", position.x, position.z, position.y));
-		}
-	}
+	m_singlePlayerSnapPending = ConfigFile::getKeyBool ("ClientGame", "singlePlayerSnapToTerrain", true);
 
 	player->endBaselines ();
 
@@ -1037,6 +1027,7 @@ GroundScene::GroundScene(
 	m_usingGodClientCamera(false),
 	m_usingGodClientInteriorCamera(false),
 	m_loading (true),
+	m_singlePlayerSnapPending (false),
 	m_sentSceneChannel(false),
 	m_receivedSceneReady(false),
 	m_noDraw(false),
@@ -1863,7 +1854,12 @@ bool GroundScene::isFinishedLoading() const
 	{
 		terrainGenerationStabilized = clientProceduralTerrainAppearance->terrainGenerationStabilized();
 	}
-	bool const hasPlayerObject = (Game::getPlayerObject() != NULL);
+	//-- In single player there is no PlayerObject and never will be. The "ghost" carrying skills,
+	//   xp, waypoints and collections is created and sent by the game server, so offline this is
+	//   permanently null and the real completion test below could never pass. That left the 90
+	//   second hard timeout as the only way out of the loading screen. Waiving it here costs
+	//   nothing: every other term still has to be true.
+	bool const hasPlayerObject = Game::getSinglePlayer() || (Game::getPlayerObject() != NULL);
 
 	// Timeout fallback (graduated): if we've been loading too long, force
 	// the screen down even if the loader/player/terrain isn't fully
@@ -1889,6 +1885,31 @@ bool GroundScene::isFinishedLoading() const
 void GroundScene::_onFinishedLoading()
 {
 	m_loading=false;
+
+	//-- Single player: drop the player onto the heightmap. Armed by the single player constructor;
+	//   see the comment there for why this cannot be done at construction time.
+	if (m_singlePlayerSnapPending)
+	{
+		m_singlePlayerSnapPending = false;
+
+		Object * const player = getPlayer ();
+		TerrainObject const * const terrainObject = TerrainObject::getConstInstance ();
+
+		if (player && terrainObject)
+		{
+			Vector position = player->getPosition_w ();
+			float  height   = 0.0f;
+
+			if (terrainObject->getHeight (position, height))
+			{
+				WARNING (true, ("Offline harness: snapping the player to terrain height %1.2f at x=%1.2f z=%1.2f.", height, position.x, position.z));
+				position.y = height;
+				player->setPosition_w (position);
+			}
+			else
+				WARNING (true, ("Offline harness: still no terrain height at x=%1.2f z=%1.2f after loading finished, leaving the player at y=%1.2f.", position.x, position.z, position.y));
+		}
+	}
 
 	Audio::setNormalPreMixBuffer();
 	Audio::unSilenceAllNonBackgroundMusic();
