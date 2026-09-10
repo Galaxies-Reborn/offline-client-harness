@@ -57,7 +57,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\Build-X64Clien
 The script builds the gameplay client and its D3D9 raster DLLs, then verifies that every runtime artifact is x64. Pass `-StagePath` to deploy those artifacts into an existing client data directory with automatic backups.
 
 ## Shared Files
-Please note that certain projects and files are prepended with `shared` which means they are files that are used in both the game engine ([the `src` repository](https://github.com/swg-source/src)) and the client. There are many enums, for instance, that must match between the client and server or there may be crashes, errors, unintended functionality or some combination thereof. ***If you make changes to any of these shared files, you must make the changes both in the src and in client-tools.***
+Please note that certain projects and files are prepended with `shared` which means they are files that are used in both the game engine ([the `src` repository](https://github.com/Galaxies-Reborn/src)) and the client. There are many enums, for instance, that must match between the client and server or there may be crashes, errors, unintended functionality or some combination thereof. ***If you make changes to any of these shared files, you must make the changes both in the src and in client-tools.***
 
 ## Deprecated Components
 Some specific features have been removed or disabled from the client as they are either no longer needed or outside the scope of the development work of SWG Source. Those removals include:
@@ -67,10 +67,10 @@ Some specific features have been removed or disabled from the client as they are
 * Any references to Perforce, a version control solution that is no longer used.
 
 ## Documentation
-We're currently working to compile more guides and developer documentation, but what is available can be found on our [SWG Source Wiki](https://github.com/swg-source/swg-main/wiki).
+Development and contribution information is maintained in the [Galaxies Reborn repositories](https://github.com/Galaxies-Reborn).
 
 ## History
-This repository and code has undergone extensive renovations and refactoring since its release in 2013 and some history isn't included in GitHub. If you're looking for how these files were originally received from SOE without modification, see the [whitengold repository](https://github.com/swg-source/whitengold).
+This repository and code has undergone extensive renovations and refactoring since its release in 2013 and some history isn't included in GitHub. If you're looking for how these files were originally received from SOE without modification, see the [whitengold repository](https://github.com/Galaxies-Reborn/whitengold).
 
 ## Branches
 * **master** - The primary development and release branch.
@@ -78,7 +78,7 @@ This repository and code has undergone extensive renovations and refactoring sin
 * **wolfssl** - A test branch where Darth was trying to implement DTLS SSL to make the connection secure. Feel free to finish this implementation.
 
 ## Contributing and More Information
-Contributions and improvements are welcome and encouraged, please submit a pull request. If you have any questions or are looking for more information and haven't already joined us in Discord, you can join [here](https://discord.gg/Va8e6n8). Please note that any changes to the client-tools that requires a rebuild of the SwgClient, will also mean a newly compiled client binary must be added to the [client-assets repository](https://github.com/swg-source/client-assets) so it can be shipped to end users.
+Contributions and improvements are welcome and encouraged, please submit a pull request. Please note that any changes to the client-tools that requires a rebuild of the SwgClient, will also mean a newly compiled client binary must be added to the [client-assets repository](https://github.com/Galaxies-Reborn/client-assets) so it can be shipped to end users.
 
 ## Additional Dependencies
 Most of the development tools use the [Qt framework](https://www.qt.io/) to render their user interface. You may wish to install the [Qt VS Tools for Visual Studio](https://marketplace.visualstudio.com/items?itemName=TheQtCompany.QtVisualStudioTools-19123) to ease development. 
