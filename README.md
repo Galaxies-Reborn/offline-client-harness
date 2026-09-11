@@ -34,7 +34,7 @@ The script builds the gameplay client and its D3D9 raster DLLs, then verifies th
 Please note that certain projects and files are prepended with `shared` which means they are files that are used in both the game engine ([the `src` repository](https://github.com/Galaxies-Reborn/src)) and the client. There are many enums, for instance, that must match between the client and server or there may be crashes, errors, unintended functionality or some combination thereof. ***If you make changes to any of these shared files, you must make the changes both in the src and in client-tools.***
 
 ## Deprecated Components
-Some specific features have been removed or disabled from the client as they are either no longer needed or outside the scope of the development work of SWG Source. Those removals include:
+Some specific features have been removed or disabled from the client as they are either no longer needed or outside the scope of the development work of Galaxies Reborn. Those removals include:
 * The In-Game Web Browser (which uses libmozilla) and any UI elements or commands to activate it
 * The Trading Card Game and any UI elements or commands to activate it
 * The Customer Service "Help" Context Menu and the Bug Reporting Form, and any UI elements or commands to activate it
@@ -62,3 +62,7 @@ Most of the development tools use the [Qt framework](https://www.qt.io/) to rend
 * Other linker errors sometimes throw, you have to work on these case by case. Please pull request any changes you make.
 * cmd.exe issues sometimes occur as SOE originally had the build setup copying files to a proper game bin directory. You can just remove these from projects that complain about them, just copy the output files manually.
 * Plenty of warnings and sometimes even errors regarding deprecated libs happen. Fixes for these are case by case.
+
+## Galaxies Reborn community
+
+Join the [Galaxies Reborn Discord](https://discord.gg/CEwKVvKxK5) for project discussion, support, and announcements.

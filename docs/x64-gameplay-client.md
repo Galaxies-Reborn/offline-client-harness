@@ -53,14 +53,14 @@ Stage the built runtime into an existing client data directory:
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\Stage-X64Client.ps1 `
-  -ClientRoot "E:\SWG\SWGSource\SWGSource Client v3.0"
+  -ClientRoot "E:\SWG\Reborn\client-runtime-x64-dx11"
 ```
 
 Or build and stage in one command:
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\Build-X64Client.ps1 `
-  -StagePath "E:\SWG\SWGSource\SWGSource Client v3.0"
+  -StagePath "E:\SWG\Reborn\client-runtime-x64-dx11"
 ```
 
 Staging validates every copied PE as x64, backs up only replaced runtime files under `.x64-backups`, and writes `x64-runtime-manifest.json`. It also backs up and removes incompatible local x86 copies of system DLLs such as `dbghelp.dll`, allowing the x64 process to use `System32`. It does not change client configuration, login settings, TOCs, or TRE files.
