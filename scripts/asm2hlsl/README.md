@@ -76,7 +76,7 @@ that function says the opposite. Within one sku, `install()` adds paths, then tr
 TOCs, so at equal priority a `.toc` beats a `.tre` — an insertion-order artifact, not a type
 precedence. Note also that the trees are *not* all at priority 0: 65 are, but `ILM_sound`,
 `ILM_maps`, `ILM_music`, `ILM_visuals`, `ILM_animation`,
-`disable_wayfar_dearic_snow` and `swgsource_3.0` sit at 2–8, and five of those outrank every
+the snow override and legacy client update archives sit at 2–8, and five of those outrank every
 TOC.
 
 **`SearchAbsolute`.** `install()` always adds one at (highest configured priority + 1), so
