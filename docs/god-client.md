@@ -18,7 +18,7 @@ Run `.\scripts\Test-X64BuildPrerequisites.ps1` to check the environment. From el
 Run from PowerShell:
 
 ```powershell
-Set-Location E:\SWG\SWGSource\Source\client-tools
+Set-Location E:\SWG\Reborn\client
 .\scripts\Build-X64GodClient.ps1 `
   -StagePath 'E:\SWG\SWGSource\Godclient v1.0 by Erusman'
 ```
